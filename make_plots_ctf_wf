@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 
 ## Run Experiments
 ./produce_data_ctf_wf
