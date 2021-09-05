@@ -1,0 +1,6 @@
+
+## Run Experiments
+./produce_data_ctf_wf
+
+## Make Plots
+./produce_plots_ctf_wf

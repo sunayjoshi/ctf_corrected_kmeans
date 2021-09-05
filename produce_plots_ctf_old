@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+## Make Plots
+python plotting.py --snr 8 --effects=-ctf-old --outfile plots-
+python plotting.py --snr 12 --effects=-ctf-old --outfile plots-
+python plotting.py --snr 16 --effects=-ctf-old --outfile plots-
