@@ -18,4 +18,4 @@ To run the Wiener Filtered Centers Algorithm (CTF-correction with Wiener Filtere
 ./make_plots_ctf_wf
 ```
 
-This code is based off of [wasserstein_k_means](https://github.com/4tywon/wasserstein-k-means/blob/master/README.md) and [ASPIRE-Python](https://github.com/ComputationalCryoEM/ASPIRE-Python).
+This code is based off of [wasserstein-k-means](https://github.com/4tywon/wasserstein-k-means/blob/master/README.md) and [ASPIRE-Python](https://github.com/ComputationalCryoEM/ASPIRE-Python).
