@@ -2,17 +2,16 @@ import numpy as np
 from scipy import ndimage, signal, optimize
 import pywt
 from tqdm import tqdm
-# Sunay: import ot for emd metric
-#import ot
-# new imports
+
+# import ctf functions
 import ctf_code
 
-# Sunay: pass in ctf_list (size 5) instead of ctf_array, then create 
+# pass in ctf_list (size 5), then create ctf_array (size 10000)
 class Dataset_Operations:
     def __init__(self, images, ctf_list, metric='wemd', level=6):
         self.images = images #mask(images, images[0].shape)
-        self.ctf_list = ctf_list # new
-        self.ctf_array = np.repeat(ctf_list, 10000/5, axis=0) #ctf_array
+        self.ctf_list = ctf_list
+        self.ctf_array = np.repeat(ctf_list, 10000/5, axis=0)
         self.metric = metric
         if metric == 'wemd':
             self.wavelet_space = wave_transform_volumes(self.images, level)
@@ -28,34 +27,10 @@ class Dataset_Operations:
             wavelet_img =  wave_transform_volumes([image], self.level)[0]
             distances = [np.abs(self.wavelet_space[i] - wavelet_img).sum() for i in range(len(self.wavelet_space))]
             return np.array(distances)
-            
-    # # Sunay: adding exact emd metric
-    # elif self.metric == 'emd':
-    #     # image reshaped
-    #     a = image.reshape(len(image)**2,1)
-    #     a = a / np.sum(a)
-    #     # Euclidean cost matrix
-    #     M = np.zeros((len(image)**2, len(image)**2))
-    #     for i in range(len(image)**2):
-    #         for j in range(len(image)**2):
-    #             x1 = i / len(image)
-    #             y1 = i - len(image) * x1
-    #             x2 = j / len(image)
-    #             y2 = j - len(image) * x2
-    #             cell_1 = np.array((x1, y1))
-    #             cell_2 = np.array((x2, y2))
-    #             M[i,j] = np.linalg.norm(cell_1 - cell_2)
-    #             # List of emd distances
-    #             distances = []
-    #             for i in range(len(self.images)):
-    #                 b = self.images[i].reshape(len(image)**2, 1)
-    #                 b = b / np.sum(b)
-    #                 distances.append(ot.lp.emd2(a, b, M))
-    #                 return np.array(distances)
 
-    # new method: batch_distance_to_ctf, distance from each entry to properly ctf'd image
+    # batch_distance_to_ctf: distance from each entry to properly ctf'd image
     def batch_distance_to_ctf(self, image):
-        # update: compute image with only 5 ctfs, then np.repeat
+        # only compute image with 5 ctfs, then np.repeat
         image_ctfs_list = [ctf.apply(image) for ctf in self.ctf_list]
         image_ctfs = np.repeat(image_ctfs_list, 10000/5, axis=0)
 
@@ -63,7 +38,7 @@ class Dataset_Operations:
             distances = [((self.images[i] - image_ctfs[i])**2).sum() for i in range(len(self.images))]
             return np.array(distances)
         
-        # update: only compute wavelet transforms for 5, then np.repeat
+        # only compute wavelet transforms for 5, then np.repeat
         elif self.metric == 'wemd':
             wavelet_imgs_list = [wave_transform_volumes([img], self.level)[0] for img in image_ctfs_list]
             wavelet_imgs = np.repeat(wavelet_imgs_list, 10000/5, axis=0)  
@@ -77,33 +52,12 @@ class Dataset_Operations:
         elif self.metric == 'wemd':
             return np.abs(self.wavelet_space[i] - self.wavelet_space[j]).sum()
 
-    # # Sunay: adding exact emd metric
-    # elif self.metric == 'emd':
-    #     # images reshaped
-    #     a = self.images[i].reshape(len(image)**2,1)
-    #     a = a / np.sum(a)
-    #     b = self.images[j].reshape(len(image)**2, 1)
-    #     b = b / np.sum(b)
-    #     # Euclidean cost matrix
-    #     M = np.zeros((len(image)**2, len(image)**2))
-    #     for i in range(len(image)**2):
-    #         for j in range(len(image)**2):
-    #             x1 = i / len(image)
-    #             y1 = i - len(image) * x
-    #             x2 = j / len(image)
-    #             y2 = j - len(image) * x
-    #             cell_1 = np.array((x1, y1))
-    #             cell_2 = np.array((x2, y2))
-    #             M[i,j] = np.linalg.norm(cell_1 - cell_2)
-    #             # Return emd
-    #             return ot.lp.emd2(a, b, M)
 
     def batch_oriented_average(self, idxs, orientation_lists, strategy='mean', ncores = 1, **kwargs):
         ''' orientations will be opposite the direction that the image will be rotated in'''
         rotated_image_sets = []
         for idx, orientations in zip(idxs, orientation_lists):
             rotated_images = [ndimage.rotate(im, -1 * orientations[i], reshape=False) for i, im in enumerate(self.images[idx])]
-            #rotated_images = [ndimage.rotate(self.images[j], -1 * orientations[i], mode='wrap', reshape=False) for i, j in enumerate(idx)] # is this right? Restore previous?
             rotated_image_sets.append(np.asarray(rotated_images))
 
         if strategy == 'mean':
@@ -120,26 +74,15 @@ class Dataset_Operations:
             numItermax = 15000 if 'numItermax' not in kwargs else kwargs['numItermax']
             return [barycenter(rotated, reg, numItermax=numItermax) for rotated in rotated_image_sets]
 
-    # new method: batch_oriented_average_ctf, average of images in cluster according to LS formula/CTFAveragingFilter
+    # batch_oriented_average_ctf: average of images in cluster according to LS formula/CTFAveragingFilter
     def batch_oriented_average_ctf(self, idxs, orientation_lists, strategy='mean', ncores = 1, **kwargs):
         ''' orientations will be opposite the direction that the image will be rotated in'''
         rotated_image_sets = []
         for idx, orientations in zip(idxs, orientation_lists):
             rotated_images = [ndimage.rotate(im, -1 * orientations[i], mode='wrap', reshape=False) for i, im in enumerate(self.images[idx])]
-            #rotated_images = [ndimage.rotate(self.images[j], -1 * orientations[i], mode='wrap', reshape=False) for i, j in enumerate(idx)] # is this right? Restore previous?
             rotated_image_sets.append(np.asarray(rotated_images))
 
-        # if strategy == 'mean':
-        #     centers = []
-        #     for rotated in rotated_image_sets:
-        #         if rotated.shape[0] != 0:
-        #             ctf_avg_filter = ctf_code.CTFAveragingFilter(self.ctf_array) # build CTFAveragingFilter
-        #             centers.append(ctf_avg_filter.apply(rotated)) # apply to find CTFAverage of rotated, list of current cluster images
-        #         else:
-        #             centers.append(np.ones(self.images[0].shape))
-        #     return np.asarray(centers)
-
-        # ATTEMPT to fix starting from "if strategy == 'mean'"... (then comment out above)
+        # modified using CTFAveragingFilter
         if strategy == 'mean':
             centers = []
             for i, rotated in enumerate(rotated_image_sets):

@@ -129,11 +129,10 @@ class CTFFilter(Filter):
 
         return im
 
-    # use wiener filter to remove ctf given snr (to be determined given images)
+    # use wiener filter to remove ctf given snr
     # see: https://gist.github.com/danstowell/f2d81a897df9e23cc1da and https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/VELDHUIZEN/node15.html
     # and https://github.com/scikit-image/scikit-image/blob/main/skimage/restoration/deconvolution.py#L11-L147
     def remove(self, image, snr):
-        # OLD IMPLEMENTATION (KINDA WORKS) COMMENTED OUT:
         filter_values = self.evaluate_grid(len(image))
         wiener_filter = np.conj(filter_values) / (np.abs(filter_values)**2 + 1/snr)
         filtered_image_fft = aux_functions.centered_fft2(wiener_filter * image)
@@ -141,13 +140,6 @@ class CTFFilter(Filter):
         filtered_image = np.real(filtered_image)
         
         return filtered_image
-        
-        # NEW implementation, using skimage.restoration unsupervised wiener filter:
-        # DON'T need snr for this?
-        # psf = np.real(aux_functions.centered_ifft2(self.evaluate_grid(len(image))))
-        # filtered_image, _ = restoration.unsupervised_wiener(image, psf)
-
-        # return filtered_image
 
 class RadialCTFFilter(CTFFilter):
     def __init__(
@@ -169,7 +161,7 @@ class RadialCTFFilter(CTFFilter):
 class CTFAveragingFilter(Filter):
     # initialize with array of ctf objects
     def __init__(self, ctf_array):
-        super().__init__(dim=2, radial=False) # check radial=False?
+        super().__init__(dim=2, radial=False)
         self.ctf_array = np.array(ctf_array)
 
     def _evaluate(self, omega):
@@ -179,17 +171,14 @@ class CTFAveragingFilter(Filter):
         factors = np.reciprocal(np.sum(ctf_evaluated_array**2, axis=0))
         
         return factors
-        
-        # return np.sum(ctf_evaluated_array**2, axis=0) # ONLY FOR WIENER FILTER APPROACH
 
     # apply to array of (rotationally-aligned) images
     def apply(self, images):
         assert len(images) == len(self.ctf_array), "Need same number of images and ctfs"
         
-        # LS APPROACH BELOW, KINDA WORKS:
-        # apply ctf to each image, then fourier transform, then sum
+        # apply ctf to each image, then Fourier Transform, then sum
         ctf_images = np.array([self.ctf_array[i].apply(images[i]) for i in range(len(images))]) # precompute
-        ctf_images = np.array([aux_functions.centered_fft2(img) for img in ctf_images]) # ctf_images in fourier domain
+        ctf_images = np.array([aux_functions.centered_fft2(img) for img in ctf_images]) # ctf_images in Fourier domain
         image = sum(ctf_images) # image in fourier domain
         
         # apply sum of squared reciprocals filter, from CTFFilter apply()
@@ -200,14 +189,3 @@ class CTFAveragingFilter(Filter):
         im = np.real(im)
         
         return im
-        
-        # # WIENER FILTER APPROACH BELOW
-        # # apply ctf to each image, then fourier transform, then sum
-        # ctf_images = np.array([self.ctf_array[i].apply(images[i]) for i in range(len(images))]) # pythonic?
-        # image = sum(ctf_images) # image in fourier domain
-        
-        # psf = np.real(aux_functions.centered_ifft2(self.evaluate_grid(len(image))))
-        # filtered_image, _ = restoration.unsupervised_wiener(image, psf)
-
-        # return filtered_image
-

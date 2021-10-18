@@ -63,7 +63,6 @@ def add_noise(images, snr):
     noise_var = power_clean/snr
     return images + np.sqrt(noise_var)*np.random.normal(0, 1, images.shape)
 logger.info("Loading" + data_file + " data at snr level " + str(snr))
-#data = np.load("data/" + data_file + "_images_centered" + effects + ".npy") # wrongly loads old ctf data
 ref_angles = np.load("data/" + data_file + "_angles_centered.npy")
 
 # added clean data
@@ -71,7 +70,7 @@ clean_data = np.load("data/" + data_file + "_images_centered.npy")
 data = np.load("data/" + data_file + "_images_centered.npy") # to be affected by ctf
 
 # initialize array of ctfs to be applied, then pass into Dataset_Operations constructor
-ctf_list = [ctf_code.RadialCTFFilter(defocus=d) for d in np.linspace(1.5e4, 2.5e4, 5)]  # list of 5 radial ctf objects; issue with divisibility into 10000 for >5 ctfs?
+ctf_list = [ctf_code.RadialCTFFilter(defocus=d) for d in np.linspace(1.5e4, 2.5e4, 5)]  # list of 5 radial ctf objects
 ctf_array = np.repeat(ctf_list, 10000/5, axis=0) # duplicate until 10,000 ctfs
 
 # apply ctfs to clean data
@@ -135,7 +134,6 @@ def initialize_centers(init='random_selected'):
     # added clean centers options; here use clean_data
     centers = [clean_data[idx] for idx in center_idxs] # using clean_data
     #centers = [ctf_array[idx].remove(centers[j], dataset_snr) for j, idx in enumerate(center_idxs)] # using Wiener Filter
-    #return clean_centers # not supposed to return!
 
 # updated; k++ returns both centers and chosen centers idx
 def _k_plus_plus():
