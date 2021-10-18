@@ -5,14 +5,13 @@ from skimage.util import montage
 import os
 import seaborn as sns
 
-# Sunay: import pickle
 import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--outfile', type=str, required=True)
 parser.add_argument('--snr', type=int, required=True)
 
-# Sunay: add effects arg that can either be none, -ctf, -transl, -ctf-transl, -denoised (names...)
+# add effects arg that can either be none, -ctf, -transl, -ctf-transl, -denoised
 # For ctf, run with --effects=-ctf
 parser.add_argument('--effects', type=str, default='')
 
@@ -21,23 +20,7 @@ args = parser.parse_args()
 snr = args.snr
 effects = args.effects
 
-# Sunay: replace input with pickle files from pickles dir
-#l2_centers = np.load("experiment_runs/l2-" + str(snr) + "-centers.npy")
-#emd_centers = np.load("experiment_runs/wemd-"+ str(snr) + "-centers.npy")
-
-#l2_labels = np.load("experiment_runs/l2-" + str(snr) + "-labels.npy")
-#emd_labels = np.load("experiment_runs/wemd-" + str(snr) + "-labels.npy")
-
-#with open("pickles/l2-" + str(args.snr) + "-centers.pickle", "rb") as f:
-#    l2_centers = pickle.load(f)
-#with open("pickles/wemd-" + str(args.snr) + "-centers.pickle", "rb") as f:
-#    emd_centers = pickle.load(f)
-
-#with open("pickles/l2-" + str(args.snr) + "-labels.pickle", "rb") as f:
-#    l2_labels = pickle.load(f)
-#with open("pickles/wemd-" + str(args.snr) + "-labels.pickle", "rb") as f:
-#    emd_labels = pickle.load(f)
-
+# replace input with pickle files from pickles dir
 with open("pickles/l2-" + str(snr) + "-centers" + effects + ".pickle", "rb") as f:              
     l2_centers = pickle.load(f)                                                 
 with open("pickles/wemd-" + str(snr) + "-centers" + effects + ".pickle", "rb") as f:            
@@ -103,9 +86,8 @@ plt.imshow(composite, vmin=-1.8, vmax=3.9)
 plt.xticks([])
 plt.yticks([])
 
-# Sunay: save figure with effects label
-#save_figure(plt, "-top_centers.pdf")
-save_figure(plt, "-top_centers" + effects + ".png") # .pdf?
+# save figure with effects label
+save_figure(plt, "-top_centers" + effects + ".png")
 plt.close()
 
      
@@ -185,15 +167,13 @@ plot_occupancy(l2_labels, '$L_2$ Based Algorithm')
 plot_occupancy(emd_labels, '$W_1$ Based Algorithm')
 if snr == 16:
     plt.legend(fontsize=20)
-# Sunay: save figures with effects label, as above. AWKWARD naming...
-#save_figure(plt, "-occupancy_dist-" + str(snr) + ".pdf")
-save_figure(plt, "-occupancy_dist-" + str(snr) + effects + ".png") # .pdf?
+# save figures with effects label, as above
+save_figure(plt, "-occupancy_dist-" + str(snr) + effects + ".png")
 plt.close()
 
 view_angle_metrics(emd_labels, ref_angles, '$W_1$ Based Algorithm')
 view_angle_metrics(l2_labels, ref_angles, '$L_2$ Based Algorithm')
 if snr == 16:
     plt.legend(fontsize=20)
-#save_figure(plt, "-angle_dist-" + str(snr) + ".pdf")
-save_figure(plt, "-angle_dist-" + str(snr) + effects + ".png") # .pdf?
+save_figure(plt, "-angle_dist-" + str(snr) + effects + ".png")
 plt.close()
