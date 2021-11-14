@@ -127,10 +127,11 @@ def plot_aggregate(hists, label):
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     ax.spines['left'].set_bounds(0, 0.007)
-    #plt.yticks([])
+    plt.yticks([])
     plt.xticks([30*i for i in range(7)], [str(30*i) + "$\degree$" for i in range(7)])
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.xlim(0,180)
+    plt.ylim(0,0.06)
     if label =='$W_1$ Based Algorithm':
         sns.kdeplot(aggregate_hist, label=label, linewidth = 3)
     else:
