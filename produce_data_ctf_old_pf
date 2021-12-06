@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+## Run Experiments
+
+# snr 1/8
+python run_clustering_old_pf.py --clustering_type wemd --n_angles 200 --k 150 --ncores 38 --snr 8 --effects=-ctf-old-pf
+
+python run_clustering_old_pf.py --clustering_type l2 --n_angles 200 --k 150 --ncores 38 --snr 8 --effects=-ctf-old-pf
+
+# snr 1/12
+python run_clustering_old_pf.py --clustering_type wemd --n_angles 200 --k 150 --ncores 38 --snr 12 --effects=-ctf-old-pf
+
+python run_clustering_old_pf.py --clustering_type l2 --n_angles 200 --k 150 --ncores 38 --snr 12 --effects=-ctf-old-pf
+
+# snr 1/16
+python run_clustering_old_pf.py --clustering_type wemd --n_angles 200 --k 150 --ncores 38 --snr 16 --effects=-ctf-old-pf
+
+python run_clustering_old_pf.py --clustering_type l2 --n_angles 200 --k 150 --ncores 38 --snr 16 --effects=-ctf-old-pf

@@ -8,10 +8,11 @@ import ctf_code
 
 # pass in ctf_list (size 5), then create ctf_array (size 10000)
 class Dataset_Operations:
-    def __init__(self, images, ctf_list, metric='wemd', level=6):
+    def __init__(self, images, ctf_list, snr, metric='wemd', level=6):
         self.images = images #mask(images, images[0].shape)
         self.ctf_list = ctf_list
         self.ctf_array = np.repeat(ctf_list, 10000/5, axis=0)
+        self.snr = snr # snr param
         self.metric = metric
         if metric == 'wemd':
             self.wavelet_space = wave_transform_volumes(self.images, level)
@@ -88,7 +89,7 @@ class Dataset_Operations:
             for i, rotated in enumerate(rotated_image_sets):
                 if rotated.shape[0] != 0:
                     ctf_array_masked = np.array([self.ctf_array[j] for j in idxs[i]])
-                    ctf_avg_filter = ctf_code.CTFAveragingFilter(ctf_array_masked)
+                    ctf_avg_filter = ctf_code.CTFAveragingFilter(ctf_array_masked, self.snr) # added snr param
                     centers.append(ctf_avg_filter.apply(rotated))
                 else:
                     centers.append(np.ones(self.images[0].shape))

@@ -89,7 +89,7 @@ logger.info("Beginning experiment ... ")
 logger.info("Using " + clustering_type + " clustering with " + str(k) + " centers and " + str(n_angles) + "angles")
 logger.info("Requested " + str(ncores) + " out of " + str(multiprocessing.cpu_count()))
 
-image_dataset = Dataset_Operations(noisy_data, ctf_list, metric=clustering_type) # have ctf_list param
+image_dataset = Dataset_Operations(noisy_data, ctf_list, snr, metric=clustering_type) # have ctf_list, snr params
 
 ## Clustering Logic
 
@@ -138,7 +138,7 @@ def initialize_centers(init='random_selected'):
 # updated; k++ returns both centers and chosen centers idx
 def _k_plus_plus():
     low_res_noise_data = np.array([rescale(im, downsampling_ratio) for im in noisy_data]).astype('float32')
-    low_res_data = Dataset_Operations(low_res_noise_data, ctf_list, metric=clustering_type) # ctf_list arg
+    low_res_data = Dataset_Operations(low_res_noise_data, ctf_list, snr, metric=clustering_type) # added ctf_list, snr params
 
     chosen_centers_idx = [np.random.randint(low_res_data.n)]
     initialization_angles = angles[::int(1/downsampling_ratio)]

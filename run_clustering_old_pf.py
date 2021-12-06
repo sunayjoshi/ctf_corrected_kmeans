@@ -32,9 +32,8 @@ parser.add_argument('--data_file_prefix', type=str, default='ribosome')
 parser.add_argument('--clustering_type', type=str,  default='l2')
 
                                                                               
-# added effects arg that can either be none, -ctf, -transl, -ctf-transl, etc.
-# ex: for ctf, run with --effects=-ctf                                        
-      
+# added effects arg that can be none, -ctf, -transl, -ctf-transl, etc.
+# ex: for ctf, run with --effects=-ctf                                              
 parser.add_argument('--effects', type=str, default='')
 
 args = parser.parse_args()
@@ -70,7 +69,7 @@ clean_data = np.load("data/" + data_file + "_images_centered.npy")
 data = np.load("data/" + data_file + "_images_centered.npy") # to be affected by ctf
 
 # initialize array of ctfs to be applied, then pass into Dataset_Operations constructor
-ctf_list = [ctf_code.RadialCTFFilter(defocus=d) for d in np.linspace(1.5e4, 2.5e4, 5)]  # list of 5 radial ctf objects
+ctf_list = [ctf_code.RadialCTFFilter(defocus=d, phase_flipped=True) for d in np.linspace(1.5e4, 2.5e4, 5)]  # list of 5 radial ctf objects; phase flipped
 ctf_array = np.repeat(ctf_list, 10000/5, axis=0) # duplicate until 10,000 ctfs
 
 # apply ctfs to clean data
@@ -97,11 +96,10 @@ image_dataset = Dataset_Operations(noisy_data, ctf_list, snr, metric=clustering_
 #dataset_noise = snr_estimator.estimate_noise_batch(noisy_data)
 dataset_snr = 1/snr #snr_estimator.estimate_snr_batch(noisy_data[0], dataset_noise)
 
-# updated
 def update_distance_for(center):
     dists = []
     for j, angle in enumerate(angles):
-        dists.append(image_dataset.batch_distance_to_ctf(ndimage.rotate(center, angle, mode='wrap', reshape=False))) # batch_distance_to_ctf
+        dists.append(image_dataset.batch_distance_to(ndimage.rotate(center, angle, mode='wrap', reshape=False))) # batch_distance_to
     return dists
 
 def save():
@@ -112,7 +110,6 @@ def save():
     with open(labels_name, 'wb') as f:
         pickle.dump(labels, f)
 
-# updated
 def initialize_centers(init='random_selected'):
     global centers
     global labels
@@ -131,14 +128,9 @@ def initialize_centers(init='random_selected'):
     if init == 'k++':
         centers, center_idxs = _k_plus_plus() # two arrays, 2nd named center_idxs for consistency with 'random_selected' case
 
-    # added clean centers options; here use clean_data
-    centers = [clean_data[idx] for idx in center_idxs] # using clean_data
-    #centers = [ctf_array[idx].remove(centers[j], dataset_snr) for j, idx in enumerate(center_idxs)] # using Wiener Filter
-
-# updated; k++ returns both centers and chosen centers idx
 def _k_plus_plus():
     low_res_noise_data = np.array([rescale(im, downsampling_ratio) for im in noisy_data]).astype('float32')
-    low_res_data = Dataset_Operations(low_res_noise_data, ctf_list, metric=clustering_type) # added ctf_list, snr params
+    low_res_data = Dataset_Operations(low_res_noise_data, ctf_list, snr, metric=clustering_type) # added ctf_list, snr params
 
     chosen_centers_idx = [np.random.randint(low_res_data.n)]
     initialization_angles = angles[::int(1/downsampling_ratio)]
@@ -150,7 +142,7 @@ def _k_plus_plus():
             new_distances[:, :len(chosen_centers_idx) - 1, :] = old_distances
             distances = new_distances
         for j, angle in enumerate(initialization_angles):
-            dist = low_res_data.batch_distance_to_ctf(ndimage.rotate(low_res_data[chosen_centers_idx[-1]], angle, mode='wrap', reshape=False)) # batch_distance_to_ctf
+            dist = low_res_data.batch_distance_to(ndimage.rotate(low_res_data[chosen_centers_idx[-1]], angle, mode='wrap', reshape=False)) # batch_distance_to
             distances[:, -1, j] = dist
         old_distances = distances.copy()
         distances = distances.reshape(low_res_data.n, len(chosen_centers_idx) *len(initialization_angles))
@@ -165,7 +157,6 @@ def _k_plus_plus():
         centers.append(image_dataset[idx])
     return centers, chosen_centers_idx
 
-# updated
 def cluster(niter = 25, ncores = 1, init='random_selected', tolerance = 100):
     global centers
     global labels
@@ -199,7 +190,7 @@ def cluster(niter = 25, ncores = 1, init='random_selected', tolerance = 100):
             label = int(label)
             idxs[label].append(idx)
             orientation_lists[label].append(orientations[idx])
-        centers = image_dataset.batch_oriented_average_ctf(idxs, orientation_lists) # batch_oriented_average_ctf
+        centers = image_dataset.batch_oriented_average(idxs, orientation_lists) # batch_oriented_average
     print(losses)
 
 if __name__ == "__main__":

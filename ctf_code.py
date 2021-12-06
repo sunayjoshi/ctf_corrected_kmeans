@@ -2,7 +2,6 @@ import numpy as np
 import math
 import aux_functions
 from numpy.fft import fft2, ifft2
-from skimage import restoration
 
 # ctf class
 
@@ -64,6 +63,7 @@ class CTFFilter(Filter):
             Cs=2.26,
             alpha=0.07,
             B=0,
+            phase_flipped=False # phase flipped param
     ):
         """
         A CTF (Contrast Transfer Function) Filter
@@ -86,6 +86,7 @@ class CTFFilter(Filter):
         self.Cs = Cs
         self.alpha = alpha
         self.B = B
+        self.phase_flipped = phase_flipped # initialize
 
         self.defocus_mean = 0.5 * (self.defocus_u + self.defocus_v)
         self.defocus_diff = 0.5 * (self.defocus_u - self.defocus_v)
@@ -111,7 +112,11 @@ class CTFFilter(Filter):
 
         if self.B:
             h *= np.exp(-self.B * r2)
-        
+
+        # if phase flipped, take absolute value
+        if self.phase_flipped:
+            h = np.abs(h)
+            
         return h.squeeze()
 
     # apply ctf to given image
@@ -121,7 +126,7 @@ class CTFFilter(Filter):
         :param filter: An object of type `Filter`.
         :return: A new filtered `Image` object.
         """
-        filter_values = self.evaluate_grid(len(image)) # check
+        filter_values = self.evaluate_grid(len(image))
         im_f = aux_functions.centered_fft2(image)
         im_f = filter_values * im_f
         im = aux_functions.centered_ifft2(im_f)
@@ -143,7 +148,7 @@ class CTFFilter(Filter):
 
 class RadialCTFFilter(CTFFilter):
     def __init__(
-            self, pixel_size=10, voltage=200, defocus=15000, Cs=2.26, alpha=0.07, B=0
+            self, pixel_size=10, voltage=200, defocus=15000, Cs=2.26, alpha=0.07, B=0, phase_flipped=False # phase flipped param
     ):
         super().__init__(
             pixel_size=pixel_size,
@@ -154,21 +159,23 @@ class RadialCTFFilter(CTFFilter):
             Cs=Cs,
             alpha=alpha,
             B=B,
+            phase_flipped=phase_flipped # initialize
         )
 
 # ctf averaging filter for M step; different than above
 
 class CTFAveragingFilter(Filter):
     # initialize with array of ctf objects
-    def __init__(self, ctf_array):
+    def __init__(self, ctf_array, snr):
         super().__init__(dim=2, radial=False)
         self.ctf_array = np.array(ctf_array)
+        self.snr = snr # snr param
 
     def _evaluate(self, omega):
         # only evaluate sum of squared reciprocals
         ctf_evaluated_array = np.array([ctf.evaluate(omega) for ctf in self.ctf_array])
 
-        factors = np.reciprocal(np.sum(ctf_evaluated_array**2, axis=0))
+        factors = np.reciprocal(np.sum(ctf_evaluated_array**2, axis=0) + self.snr) # multi-image Wiener Filter has + (1/)snr term
         
         return factors
 

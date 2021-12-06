@@ -2,19 +2,21 @@ First make a directory called data at the root of the repo. Then copy [ribosome\
 
 To run the Benchmark Algorithm (no CTF-correction), run
 ```
-./produce_data_ctf_old
 ./make_plots_ctf_old
+```
+
+To run the Phase-flipped Benchmark Algorithm (no CTF-correction except initial phase flipping), run
+```
+./make_plots_ctf_old_pf
 ```
 
 To run the Clean Centers Algorithm (CTF-correction with oracle initialization), run
 ```
-./produce_data_ctf_clean
 ./make_plots_ctf_clean
 ```
 
 To run the Wiener Filtered Centers Algorithm (CTF-correction with Wiener Filtered initialization), run
 ```
-./produce_data_ctf_wf
 ./make_plots_ctf_wf
 ```
 

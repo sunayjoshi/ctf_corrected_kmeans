@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+## Run Experiments
+./produce_data_ctf_old
+
+## Make Plots
+./produce_plots_ctf_old
