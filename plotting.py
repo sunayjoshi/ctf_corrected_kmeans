@@ -12,7 +12,7 @@ parser.add_argument('--outfile', type=str, required=True)
 parser.add_argument('--snr', type=int, required=True)
 
 # add effects arg that can either be none, -ctf, -transl, -ctf-transl, -denoised
-# For ctf, run with --effects=-ctf
+ # For ctf, run with --effects=-ctf
 parser.add_argument('--effects', type=str, default='')
 
 args = parser.parse_args()
